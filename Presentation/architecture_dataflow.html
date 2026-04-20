@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMS System - Architecture & Dataflow Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+            border-bottom: 2px solid #0369a1;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #38bdf8;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-size: 0.95em;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .section {
+            margin-bottom: 50px;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #38bdf8;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0369a1;
+            font-weight: 700;
+        }
+
+        /* ===== HARDWARE LAYER ===== */
+        .hardware-layer {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 30px;
+            border-radius: 8px;
+            border: 2px solid #334155;
+            margin-bottom: 30px;
+        }
+
+        .hardware-box {
+            background: #1e293b;
+            border: 2px solid #475569;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .hardware-box:hover {
+            border-color: #0369a1;
+            box-shadow: 0 0 20px rgba(3, 105, 161, 0.3);
+        }
+
+        .hardware-box h3 {
+            color: #fbbf24;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .hardware-spec {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .spec-item {
+            background: #0f172a;
+            padding: 12px;
+            border-left: 3px solid #0369a1;
+            border-radius: 4px;
+        }
+
+        .spec-item strong {
+            color: #38bdf8;
+        }
+
+        .spec-item span {
+            color: #cbd5e1;
+        }
+
+        /* ===== PROXMOX LAYER ===== */
+        .proxmox-layer {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e293b 100%);
+            padding: 30px;
+            border-radius: 8px;
+            border: 2px solid #0369a1;
+            margin-bottom: 30px;
+        }
+
+        .hyper-box {
+            background: #0f172a;
+            border: 2px solid #0369a1;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .hyper-box h4 {
+            color: #38bdf8;
+            margin-bottom: 10px;
+        }
+
+        .hyper-box p {
+            color: #94a3b8;
+            font-size: 0.9em;
+        }
+
+        /* ===== CONTAINERS GRID ===== */
+        .containers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .container-box {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #334155;
+            border-radius: 8px;
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .container-box:hover {
+            border-color: #10b981;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+        }
+
+        .container-box.active {
+            border-color: #10b981;
+            background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%);
+        }
+
+        .container-box.future {
+            border-color: #855044;
+            background: linear-gradient(135deg, #563230 0%, #0f172a 100%);
+            opacity: 0.7;
+        }
+
+        .container-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #475569;
+        }
+
+        .container-icon {
+            font-size: 1.8em;
+        }
+
+        .container-box h3 {
+            color: #10b981;
+            font-size: 1.2em;
+            margin-bottom: 3px;
+        }
+
+        .container-box.future h3 {
+            color: #d97706;
+        }
+
+        .container-type {
+            color: #94a3b8;
+            font-size: 0.85em;
+        }
+
+        .os-info {
+            background: #0f172a;
+            padding: 10px;
+            border-left: 3px solid #38bdf8;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .os-info p {
+            color: #cbd5e1;
+            font-size: 0.9em;
+            margin: 3px 0;
+        }
+
+        .services-list {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 3px solid #10b981;
+        }
+
+        .services-list h4 {
+            color: #10b981;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+        }
+
+        .service-item {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .service-icon {
+            color: #10b981;
+            min-width: 15px;
+        }
+
+        .service-name {
+            color: #cbd5e1;
+        }
+
+        .service-detail {
+            color: #64748b;
+            font-size: 0.8em;
+        }
+
+        /* ===== DATAFLOW DIAGRAM ===== */
+        .dataflow-section {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 30px;
+            border-radius: 8px;
+            border: 2px solid #475569;
+            margin-bottom: 30px;
+        }
+
+        .dataflow-canvas {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            overflow-x: auto;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .flow-diagram {
+            min-width: 100%;
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+        }
+
+        /* ===== NETWORK CONNECTION ===== */
+        .network-section {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 30px;
+            border-radius: 8px;
+            border: 2px solid #475569;
+            margin-bottom: 30px;
+        }
+
+        .network-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .network-item {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .network-item:hover {
+            border-color: #0369a1;
+            box-shadow: 0 0 15px rgba(3, 105, 161, 0.2);
+        }
+
+        .network-item strong {
+            color: #38bdf8;
+        }
+
+        .network-item p {
+            color: #cbd5e1;
+            font-size: 0.9em;
+            margin-top: 8px;
+            line-height: 1.6;
+        }
+
+        /* ===== TABLE ===== */
+        .table-section {
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+
+        .component-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .component-table thead {
+            background: #1e293b;
+            border-bottom: 2px solid #0369a1;
+        }
+
+        .component-table th {
+            padding: 12px;
+            text-align: left;
+            color: #38bdf8;
+            font-weight: 600;
+            border-right: 1px solid #334155;
+        }
+
+        .component-table th:last-child {
+            border-right: none;
+        }
+
+        .component-table td {
+            padding: 12px;
+            border-right: 1px solid #334155;
+            border-bottom: 1px solid #334155;
+            color: #cbd5e1;
+        }
+
+        .component-table td:last-child {
+            border-right: none;
+        }
+
+        .component-table tbody tr:hover {
+            background: #1e293b;
+        }
+
+        .tech-badge {
+            display: inline-block;
+            background: #0369a1;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            margin-right: 5px;
+            margin-bottom: 3px;
+        }
+
+        /* ===== LEGEND ===== */
+        .legend {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .legend h4 {
+            color: #38bdf8;
+            margin-bottom: 15px;
+        }
+
+        .legend-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            border: 1px solid #475569;
+        }
+
+        .legend-color.active {
+            border-color: #10b981;
+            background: linear-gradient(135deg, #064e3b 0%, #0f172a 100%);
+        }
+
+        .legend-color.future {
+            border-color: #855044;
+            background: linear-gradient(135deg, #563230 0%, #0f172a 100%);
+        }
+
+        .legend-color.network {
+            border-color: #0369a1;
+            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+        }
+
+        .legend-text {
+            color: #cbd5e1;
+            font-size: 0.9em;
+        }
+
+        /* ===== CODE BLOCK ===== */
+        .code-section {
+            background: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            overflow-x: auto;
+        }
+
+        .code-section h4 {
+            color: #38bdf8;
+            margin-bottom: 15px;
+        }
+
+        .code-block {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 3px solid #10b981;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            color: #cbd5e1;
+            overflow-x: auto;
+            line-height: 1.5;
+        }
+
+        .keyword {
+            color: #f472b6;
+        }
+
+        .string {
+            color: #86efac;
+        }
+
+        .number {
+            color: #fbbf24;
+        }
+
+        .comment {
+            color: #64748b;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .containers-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .network-items {
+                grid-template-columns: 1fr;
+            }
+
+            .legend-items {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            border-top: 1px solid #334155;
+            color: #64748b;
+            margin-top: 50px;
+        }
+
+        .footer p {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+
+        .footer strong {
+            color: #cbd5e1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>🏗️ OMS System Architecture & Dataflow</h1>
+        <p>Poolvilla & MINI Resorts - Complete System Design</p>
+    </div>
+
+    <div class="container">
+        <!-- ===== HARDWARE LAYER ===== -->
+        <div class="section">
+            <h2 class="section-title">💻 Hardware Infrastructure Layer</h2>
+            <div class="hardware-layer">
+                <div class="hardware-box">
+                    <h3>🖥️ Server: Intel NUC 7i5BNH Mini PC</h3>
+                    <div class="hardware-spec">
+                        <div class="spec-item">
+                            <strong>CPU:</strong><br><span>Intel Core i5-7th Gen</span>
+                        </div>
+                        <div class="spec-item">
+                            <strong>RAM:</strong><br><span>16 GB DDR4</span>
+                        </div>
+                        <div class="spec-item">
+                            <strong>Storage Primary:</strong><br><span>M.2 NVMe 128 GB</span>
+                        </div>
+                        <div class="spec-item">
+                            <strong>Storage Secondary:</strong><br><span>SATA 500 GB</span>
+                        </div>
+                        <div class="spec-item">
+                            <strong>Form Factor:</strong><br><span>Mini PC (Compact)</span>
+                        </div>
+                        <div class="spec-item">
+                            <strong>Use Case:</strong><br><span>Edge Computing</span>
+                        </div>
+                    </div>
+                    <div
+                        style="margin-top: 20px; padding: 15px; background: #0f172a; border-left: 3px solid #fbbf24; border-radius: 4px;">
+                        <p style="color: #fbbf24; font-weight: 600; margin-bottom: 8px;">⚡ System Requirements:</p>
+                        <p style="color: #cbd5e1; font-size: 0.9em; line-height: 1.6;">
+                            • <strong>Power Supply:</strong> 90W DC Adapter<br>
+                            • <strong>Network:</strong> Gigabit Ethernet + WiFi AC<br>
+                            • <strong>Cooling:</strong> Passive (Silent Operation)<br>
+                            • <strong>Dimensions:</strong> 94 x 103 x 53 mm
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== VIRTUALIZATION LAYER ===== -->
+        <div class="section">
+            <h2 class="section-title">⚙️ Virtualization & Hypervisor Layer</h2>
+            <div class="proxmox-layer">
+                <div class="hyper-box">
+                    <h4>🎯 Proxmox VE (Host OS)</h4>
+                    <p>Bare-metal Hypervisor - Debian-based Linux with KVM+LXC Support</p>
+                    <div style="margin-top: 15px; color: #64748b; font-size: 0.85em;">
+                        Manages resource allocation for both LXC containers and VMs
+                    </div>
+                </div>
+
+                <p style="text-align: center; color: #64748b; margin: 20px 0;">
+                    ┃<br>├─ LXC Containers (Lightweight Linux)<br>└─ VMs (Full Virtualization)
+                </p>
+            </div>
+        </div>
+
+        <!-- ===== CONTAINERS & SERVICES ===== -->
+        <div class="section">
+            <h2 class="section-title">🐳 Containers & Services Architecture</h2>
+            <div class="containers-grid">
+                <!-- Container 1: Customer Service -->
+                <div class="container-box active">
+                    <div class="container-header">
+                        <div class="container-icon">🤖</div>
+                        <div>
+                            <h3>LXC Container 1</h3>
+                            <p class="container-type">Customer Service Zone (Active)</p>
+                        </div>
+                    </div>
+
+                    <div class="os-info">
+                        <p><strong>OS:</strong> Ubuntu 24.04 LTS</p>
+                        <p><strong>Architecture:</strong> Lightweight Container</p>
+                        <p><strong>Purpose:</strong> Main Application Layer</p>
+                    </div>
+
+                    <div class="services-list">
+                        <h4>🐳 Core Stack (Docker Compose)</h4>
+                        <div class="service-item">
+                            <span class="service-icon">📦</span>
+                            <div style="flex: 1;">
+                                <span class="service-name"><strong>n8n</strong></span><br>
+                                <span class="service-detail">Workflow Automation Engine - Orchestrates all
+                                    integrations</span>
+                            </div>
+                        </div>
+                        <div class="service-item">
+                            <span class="service-icon">⚡</span>
+                            <div style="flex: 1;">
+                                <span class="service-name"><strong>FastAPI</strong></span><br>
+                                <span class="service-detail">Custom business logic server - REST API endpoints</span>
+                            </div>
+                        </div>
+                        <div class="service-item">
+                            <span class="service-icon">🗄️</span>
+                            <div style="flex: 1;">
+                                <span class="service-name"><strong>PostgreSQL</strong></span><br>
+                                <span class="service-detail">Primary database - Customer data, bookings,
+                                    transactions</span>
+                            </div>
+                        </div>
+                        <div class="service-item">
+                            <span class="service-icon">⚡</span>
+                            <div style="flex: 1;">
+                                <span class="service-name"><strong>Redis</strong></span><br>
+                                <span class="service-detail">In-memory cache - Session storage, chat history
+                                    queue</span>
+                            </div>
+                        </div>
+                        <div class="service-item">
+                            <span class="service-icon">💬</span>
+                            <div style="flex: 1;">
+                                <span class="service-name"><strong>Chatbot Service</strong></span><br>
+                                <span class="service-detail">Rule-based Q&A engine - No LLM (prevent
+                                    hallucination)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Container 2: Home Automation (Future) -->
+                <div class="container-box future">
+                    <div class="container-header">
+                        <div class="container-icon">🏠</div>
+                        <div>
+                            <h3>VM / LXC 2</h3>
+                            <p class="container-type">Home Automation (Future Development)</p>
+                        </div>
+                    </div>
+
+                    <div class="os-info">
+                        <p><strong>OS:</strong> Home Assistant OS (HAOS)</p>
+                        <p><strong>Architecture:</strong> Full VM Recommended</p>
+                        <p><strong>Status:</strong> 🔴 Not yet implemented</p>
+                    </div>
+
+                    <div class="services-list">
+                        <h4>🏡 IoT Stack</h4>
+                        <div class="service-item">
+                            <span class="service-icon">📡</span>
+                            <div style="flex: 1;">
+                                <span class="service-name"><strong>Home Assistant</strong></span><br>
+                                <span class="service-detail">Central hub for all IoT devices & automation</span>
+                            </div>
+                        </div>
+                        <div class="service-item">
+                            <span class="service-icon">📨</span>
+                            <div style="flex: 1;">
+                                <span class="service-name"><strong>MQTT Broker (Mosquitto)</strong></span><br>
+                                <span class="service-detail">Message queue for IoT sensor communication</span>
+                            </div>
+                        </div>
+                        <div class="service-item">
+                            <span class="service-icon">🔧</span>
+                            <div style="flex: 1;">
+                                <span class="service-name"><strong>IoT Devices</strong></span><br>
+                                <span class="service-detail">ESP32/M5Stack boards with sensors</span>
+                            </div>
+                        </div>
+                        <div class="service-item">
+                            <span class="service-icon">🔔</span>
+                            <div style="flex: 1;">
+                                <span class="service-name"><strong>LINE Notifications</strong></span><br>
+                                <span class="service-detail">Send alerts via LINE Notify integration</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== LEGEND ===== -->
+        <div class="legend">
+            <h4>📌 Legend</h4>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-color active"></div>
+                    <span class="legend-text">Active/Current Development</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color future"></div>
+                    <span class="legend-text">Future Development Phase</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color network"></div>
+                    <span class="legend-text">Network/Integration Layer</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== DATAFLOW DIAGRAM ===== -->
+        <div class="section">
+            <h2 class="section-title">🔄 Data Flow Architecture</h2>
+            <div class="dataflow-section">
+                <div class="dataflow-canvas">
+                    <pre class="flow-diagram">
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                          EXTERNAL CHANNELS (Multi-Source)                       │
+│                                                                                 │
+│        [LINE]   [Messenger]   [TikTok]   [Phone]   [Website]   [Email]          │
+│          │          │            │         │         │           │              │
+└──────────┼──────────┼────────────┼─────────┼─────────┼───────────┼──────────────┘
+           │          │            │         │         │           │
+           └──────────┴────────────┴─────────┴─────────┴───────────┘
+                                   │
+                        ┌──────────▼──────────┐
+                        │   n8n Workflow      │
+                        │   Engine (Event     │
+                        │   Orchestrator)     │
+                        └──────┬───────┬──────┘
+                               │       │
+                   ┌───────────┘       └───────────┐
+                   │                               │
+        ┌──────────▼────────────┐    ┌────────────▼──────────┐
+        │   Chatbot Service     │    │   FastAPI Server      │
+        │   (Rule-Based Q&A)    │    │   (Business Logic)    │
+        └──────────┬────────────┘    └────────────┬──────────┘
+                   │                               │
+                   │        ┌──────────────────────┘
+                   │        │
+        ┌──────────▼────────▼──────────────────┐
+        │     Data Validation & Processing     │
+        └──────────┬───────────────────────────┘
+                   │
+        ┌──────────┴────────────────────────────┐
+        │                                       │
+        │    PRIMARY DATA LAYER (PostgreSQL)    │
+        │                                       │
+        │  • Customers (Profile, Contact)       │
+        │  • Rooms (Type, Price, Status)        │
+        │  • Bookings (Reservation Data)        │
+        │  • Payments (Transaction Records)     │
+        │  • Promotions (Offers, Validity)      │
+        │  • Chat History (Conversation Logs)   │
+        │  • Analytics (Behavioral Data)        │
+        │                                       │
+        └───────────────────────────────────────┘
+                   ▲                   │`
+                   │                   │
+        ┌──────────┴────────────┐      │
+        │     REDIS Cache       │      │
+        │ (Session, Queue, TTL) │      │
+        └───────────────────────┘      │
+                                       │
+                        ┌──────────────▼──────────────┐
+                        │   Analytics Engine          │
+                        │   (Reporting, Insights)     │
+                        └─────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        FUTURE: Home Automation Layer                            │
+│                                                                                 │
+│  [Sensors] ──MQTT──> [Mosquitto Broker] ──> [Home Assistant] ──> [LINE Alert]   │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+                    </pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== NETWORK CONNECTIONS ===== -->
+        <div class="section">
+            <h2 class="section-title">🌐 Network & Integration Points</h2>
+            <div class="network-section">
+                <div class="network-items">
+                    <div class="network-item">
+                        <strong>External APIs</strong>
+                        <p>• LINE Messaging API<br>
+                            • Facebook Messenger API<br>
+                            • Payment Gateway (Omise, 2Checkout)<br>
+                            • QR Code Verification Service</p>
+                    </div>
+                    <div class="network-item">
+                        <strong>Container Networking</strong>
+                        <p>• Docker Bridge Network<br>
+                            • Service-to-Service Communication<br>
+                            • DNS Resolution (service names)<br>
+                            • Port Mapping & Exposure</p>
+                    </div>
+                    <div class="network-item">
+                        <strong>Data Synchronization</strong>
+                        <p>• Real-time event webhooks<br>
+                            • PostgreSQL replication<br>
+                            • Redis pub/sub messaging<br>
+                            • Cache invalidation triggers</p>
+                    </div>
+                    <div class="network-item">
+                        <strong>Security Layer</strong>
+                        <p>• API authentication (JWT)<br>
+                            • Database encryption (TLS)<br>
+                            • Rate limiting (n8n)<br>
+                            • Input validation (FastAPI)</p>
+                    </div>
+                    <div class="network-item">
+                        <strong>Monitoring & Logging</strong>
+                        <p>• Container logs (Docker)<br>
+                            • Application logs (n8n, FastAPI)<br>
+                            • Database query logs<br>
+                            • System metrics (Proxmox)</p>
+                    </div>
+                    <div class="network-item">
+                        <strong>Backup & Recovery</strong>
+                        <p>• Database backup (PostgreSQL)<br>
+                            • Configuration versioning<br>
+                            • Docker image snapshots<br>
+                            • Regular export schedules</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== COMPONENT TABLE ===== -->
+        <div class="section">
+            <h2 class="section-title">📋 Component Specifications</h2>
+            <div class="table-section">
+                <table class="component-table">
+                    <thead>
+                        <tr>
+                            <th>Component</th>
+                            <th>Technology</th>
+                            <th>Purpose</th>
+                            <th>Status</th>
+                            <th>Resource Allocation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Hypervisor</strong></td>
+                            <td><span class="tech-badge">Proxmox VE</span></td>
+                            <td>Virtualization & Resource Management</td>
+                            <td>✅ Active</td>
+                            <td>Host: 16GB RAM, All CPU cores</td>
+                        </tr>
+                        <tr>
+                            <td><strong>n8n</strong></td>
+                            <td><span class="tech-badge">Node.js</span><span class="tech-badge">Docker</span></td>
+                            <td>Workflow Automation & Integration</td>
+                            <td>✅ Active</td>
+                            <td>2-4 CPU cores, 2-3GB RAM</td>
+                        </tr>
+                        <tr>
+                            <td><strong>FastAPI</strong></td>
+                            <td><span class="tech-badge">Python</span><span class="tech-badge">Uvicorn</span></td>
+                            <td>REST API & Business Logic</td>
+                            <td>✅ Active</td>
+                            <td>2 CPU cores, 1-2GB RAM</td>
+                        </tr>
+                        <tr>
+                            <td><strong>PostgreSQL</strong></td>
+                            <td><span class="tech-badge">SQL</span><span class="tech-badge">Docker</span></td>
+                            <td>Primary Database (Relational)</td>
+                            <td>✅ Active</td>
+                            <td>2 CPU cores, 2GB RAM, 50GB storage</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Redis</strong></td>
+                            <td><span class="tech-badge">In-Memory</span><span class="tech-badge">Docker</span></td>
+                            <td>Cache & Session Store</td>
+                            <td>✅ Active</td>
+                            <td>1 CPU core, 1GB RAM, 10GB storage</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Chatbot</strong></td>
+                            <td><span class="tech-badge">Python</span><span class="tech-badge">Custom Logic</span></td>
+                            <td>Rule-Based Q&A (No LLM)</td>
+                            <td>✅ Active</td>
+                            <td>1 CPU core, 512MB RAM</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Home Assistant</strong></td>
+                            <td><span class="tech-badge">Python</span><span class="tech-badge">VM</span></td>
+                            <td>IoT & Home Automation Hub</td>
+                            <td>🔴 Future</td>
+                            <td>2 CPU cores, 2GB RAM (planned)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MQTT Broker</strong></td>
+                            <td><span class="tech-badge">Mosquitto</span><span class="tech-badge">Docker</span></td>
+                            <td>IoT Message Queue (MQTT)</td>
+                            <td>🔴 Future</td>
+                            <td>1 CPU core, 256MB RAM (planned)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ===== DEPLOYMENT GUIDE ===== -->
+        <div class="section">
+            <h2 class="section-title">🚀 Deployment & Configuration</h2>
+            <div class="code-section">
+                <h4>Docker Compose Stack (Container 1)</h4>
+                <pre class="code-block"><span class="keyword">version:</span> <span class="string">'3.8'</span>
+
+<span class="keyword">services:</span>
+
+  <span class="keyword">n8n:</span>
+    <span class="keyword">image:</span> <span class="string">n8n:latest</span>
+    <span class="keyword">ports:</span>
+      - <span class="string">"5678:5678"</span>
+    <span class="keyword">environment:</span>
+      - <span class="string">N8N_BASIC_AUTH_ACTIVE=true</span>
+      - <span class="string">N8N_BASIC_AUTH_USER=admin</span>
+      - <span class="string">N8N_BASIC_AUTH_PASSWORD=secure_password</span>
+    <span class="keyword">volumes:</span>
+      - <span class="string">n8n_data:/home/node/.n8n</span>
+    <span class="keyword">networks:</span>
+      - <span class="string">oms_network</span>
+
+  <span class="keyword">fastapi:</span>
+    <span class="keyword">build:</span>
+      <span class="keyword">context:</span> <span class="string">./fastapi</span>
+    <span class="keyword">ports:</span>
+      - <span class="string">"8000:8000"</span>
+    <span class="keyword">depends_on:</span>
+      - <span class="string">postgres</span>
+      - <span class="string">redis</span>
+    <span class="keyword">networks:</span>
+      - <span class="string">oms_network</span>
+
+  <span class="keyword">postgres:</span>
+    <span class="keyword">image:</span> <span class="string">postgres:15-alpine</span>
+    <span class="keyword">environment:</span>
+      - <span class="string">POSTGRES_DB=oms_db</span>
+      - <span class="string">POSTGRES_USER=oms_user</span>
+      - <span class="string">POSTGRES_PASSWORD=secure_password</span>
+    <span class="keyword">volumes:</span>
+      - <span class="string">postgres_data:/var/lib/postgresql/data</span>
+    <span class="keyword">networks:</span>
+      - <span class="string">oms_network</span>
+
+  <span class="keyword">redis:</span>
+    <span class="keyword">image:</span> <span class="string">redis:7-alpine</span>
+    <span class="keyword">ports:</span>
+      - <span class="string">"6379:6379"</span>
+    <span class="keyword">volumes:</span>
+      - <span class="string">redis_data:/data</span>
+    <span class="keyword">networks:</span>
+      - <span class="string">oms_network</span>
+
+<span class="keyword">volumes:</span>
+  n8n_data:
+  postgres_data:
+  redis_data:
+
+<span class="keyword">networks:</span>
+  oms_network:
+    <span class="keyword">driver:</span> <span class="string">bridge</span></pre>
+            </div>
+
+            <div class="code-section" style="margin-top: 30px;">
+                <h4>Startup Commands</h4>
+                <pre class="code-block">
+<span class="comment"># Create LXC Container (from Proxmox CLI)</span>
+pct create <span class="number">100</span> local:vztmpl/ubuntu-<span class="number">24</span>.04-standard_24.04-1_amd64.tar.zst
+
+<span class="comment"># Access container</span>
+pct shell <span class="number">100</span>
+
+<span class="comment"># Install Docker & Docker Compose</span>
+apt update && apt install docker.io docker-compose -y
+
+<span class="comment"># Start services</span>
+docker-compose -f docker-compose.yml up -d
+
+<span class="comment"># Check status</span>
+docker-compose ps
+docker logs -f n8n <span class="comment"># View n8n logs</span>
+                </pre>
+            </div>
+        </div>
+
+        <!-- ===== DATA PERSISTANCE ===== -->
+        <div class="section">
+            <h2 class="section-title">💾 Data Persistence & Backup Strategy</h2>
+            <div class="network-section">
+                <div class="network-items">
+                    <div class="network-item">
+                        <strong>Primary Storage</strong>
+                        <p><strong>Location:</strong> M.2 NVMe (128GB)<br>
+                            <strong>Purpose:</strong> OS + Docker containers<br>
+                            <strong>Speed:</strong> High-speed R/W operations
+                        </p>
+                    </div>
+                    <div class="network-item">
+                        <strong>Data Storage</strong>
+                        <p><strong>Location:</strong> SATA SSD (500GB)<br>
+                            <strong>Purpose:</strong> PostgreSQL data files<br>
+                            <strong>Speed:</strong> Consistent performance
+                        </p>
+                    </div>
+                    <div class="network-item">
+                        <strong>Backup Strategy</strong>
+                        <p><strong>Database:</strong> Daily automated backups<br>
+                            <strong>Configuration:</strong> Git versioning<br>
+                            <strong>Volumes:</strong> Scheduled snapshots<br>
+                            <strong>Retention:</strong> 30-day rolling window
+                        </p>
+                    </div>
+                    <div class="network-item">
+                        <strong>Disaster Recovery</strong>
+                        <p><strong>RTO:</strong> 30 minutes<br>
+                            <strong>RPO:</strong> 1 hour<br>
+                            <strong>External:</strong> Cloud storage backup<br>
+                            <strong>Testing:</strong> Monthly recovery drills
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== SCALING CONSIDERATIONS ===== -->
+        <div class="section">
+            <h2 class="section-title">📈 Scaling & Performance Considerations</h2>
+            <div class="network-section">
+                <div class="network-items">
+                    <div class="network-item">
+                        <strong>Current Capacity</strong>
+                        <p>• <strong>Concurrent Users:</strong> ~50-100<br>
+                            • <strong>Daily Requests:</strong> ~10,000<br>
+                            • <strong>Storage:</strong> ~50GB (current)<br>
+                            • <strong>Response Time:</strong> &lt;500ms</p>
+                    </div>
+                    <div class="network-item">
+                        <strong>Bottlenecks</strong>
+                        <p>• <strong>CPU:</strong> n8n workflow execution<br>
+                            • <strong>Memory:</strong> Redis cache during peak<br>
+                            • <strong>Disk I/O:</strong> PostgreSQL writes<br>
+                            • <strong>Network:</strong> Upstream API calls</p>
+                    </div>
+                    <div class="network-item">
+                        <strong>Optimization Paths</strong>
+                        <p>• <strong>Vertical:</strong> Upgrade to NUC with i7<br>
+                            • <strong>Horizontal:</strong> Multi-node Proxmox cluster<br>
+                            • <strong>Database:</strong> PostgreSQL replication<br>
+                            • <strong>Caching:</strong> Advanced Redis patterns</p>
+                    </div>
+                    <div class="network-item">
+                        <strong>Monitoring Metrics</strong>
+                        <p>• <strong>CPU Usage:</strong> Alert &gt;80%<br>
+                            • <strong>Memory:</strong> Alert &gt;85%<br>
+                            • <strong>Disk:</strong> Alert &gt;90%<br>
+                            • <strong>Response Time:</strong> Track p95 latency</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== SECURITY ARCHITECTURE ===== -->
+        <div class="section">
+            <h2 class="section-title">🔒 Security Architecture</h2>
+            <div class="code-section">
+                <h4>Security Layers</h4>
+                <p style="color: #cbd5e1; margin-bottom: 15px;">
+                    <strong style="color: #38bdf8;">Layer 1: Network Security</strong><br>
+                    • Proxmox firewall rules<br>
+                    • UFW (Ubuntu Uncomplicated Firewall)<br>
+                    • Port mapping & isolation
+                </p>
+                <p style="color: #cbd5e1; margin-bottom: 15px;">
+                    <strong style="color: #38bdf8;">Layer 2: Application Security</strong><br>
+                    • JWT authentication<br>
+                    • Input validation & sanitization<br>
+                    • Rate limiting & DDoS protection
+                </p>
+                <p style="color: #cbd5e1; margin-bottom: 15px;">
+                    <strong style="color: #38bdf8;">Layer 3: Data Security</strong><br>
+                    • Database encryption (TLS 1.3)<br>
+                    • Password hashing (bcrypt)<br>
+                    • Secrets management (Docker secrets)
+                </p>
+                <p style="color: #cbd5e1; margin-bottom: 15px;">
+                    <strong style="color: #38bdf8;">Layer 4: Operational Security</strong><br>
+                    • Regular security audits<br>
+                    • Log monitoring & alerting<br>
+                    • Penetration testing quarterly
+                </p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>🏗️ OMS System Architecture Diagram</strong></p>
+            <p>Poolvilla & MINI Resorts - 2026</p>
+            <p style="margin-top: 15px; color: #475569;">Last Updated: April 20, 2026 | Version: 1.0 (Beta)</p>
+        </div>
+    </div>
+</body>
+
+</html>
